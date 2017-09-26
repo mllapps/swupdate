@@ -91,6 +91,8 @@ static int download_info(void *p,
 	struct dlprogress *dlp = (struct dlprogress *)p;
 	CURL *curl = dlp->curl;
 	double curtime = 0;
+	curl_off_t dlpercent;
+	char buf[64];
 	curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &curtime);
 
 	if ((curtime - dlp->lastruntime) >= MINIMAL_PROGRESS_INTERVAL) {
@@ -98,6 +100,13 @@ static int download_info(void *p,
 		INFO("Received : %" CURL_FORMAT_CURL_OFF_T " / %"
 		     CURL_FORMAT_CURL_OFF_T, dlnow, dltotal);
 	}
+	
+	memset(buf, 0, 64);
+	dlpercent = 100 * dlnow / dltotal;
+	
+	sprintf(buf, "psplash-write \"PROGRESS %d\"", dlpercent);
+	
+	system(buf);
 
 	return 0;
 }
@@ -393,6 +402,8 @@ int start_download(const char *fname, int argc, char *argv[])
 		 */
 		sleep(60);
 	}
+	
+	system("psplash-write \"MSG Downloading...\"");
 
 	exit(result);
 }
